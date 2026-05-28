@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NewsFlow - 新闻聚合</title>
-    <meta name="description" content="多源新闻聚合，覆盖科技、财经、AI、创投、开发者社区等领域">
+    <title>NewsFlow - 每日新闻智能聚焦</title>
+    <meta name="description" content="多源新闻聚合与趋势分析，覆盖科技、财经、AI前沿、创投、开发者社区等领域">
     <style>
         :root {
             --bg: #f5f5f7;
@@ -17,7 +17,7 @@
             --badge-bg: #e8e8ed;
             --shadow: 0 1px 3px rgba(0,0,0,0.08);
             --shadow-hover: 0 4px 12px rgba(0,0,0,0.12);
-            --radius: 10px;
+            --radius: 12px;
         }
         [data-theme="dark"] {
             --bg: #0a0a0f;
@@ -88,13 +88,20 @@
             transition: all 0.2s;
         }
         .btn-icon:hover { background: var(--border); }
+        
+        /* Search & Trends Section */
+        .search-row {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
         .search-box {
             display: flex;
             align-items: center;
             background: var(--badge-bg);
             border-radius: 8px;
             padding: 0 12px;
-            margin-bottom: 12px;
+            flex: 1;
         }
         .search-icon { color: var(--text-secondary); font-size: 14px; }
         .search-box input {
@@ -107,6 +114,32 @@
             color: var(--text);
         }
         .search-box input::placeholder { color: var(--text-secondary); }
+        
+        .trends-bar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 0;
+            margin-bottom: 12px;
+            font-size: 13px;
+            flex-wrap: wrap;
+        }
+        .trends-label { font-weight: 600; color: var(--text-secondary); white-space: nowrap; }
+        .trend-tag {
+            background: var(--badge-bg);
+            color: var(--text);
+            padding: 2px 10px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+        }
+        .trend-tag:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
         .categories {
             display: flex;
             gap: 6px;
@@ -130,6 +163,7 @@
         .cat-btn:hover { color: var(--text); background: var(--border); }
         .cat-btn.active { background: var(--accent); color: #fff; }
         .cat-count { font-size: 11px; margin-left: 4px; opacity: 0.7; }
+        
         .container {
             max-width: 1200px;
             margin: 0 auto;
@@ -139,49 +173,74 @@
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
             gap: 16px;
+            margin-bottom: 40px;
         }
         .news-card {
             background: var(--card-bg);
             border-radius: var(--radius);
-            padding: 16px;
+            padding: 18px;
             box-shadow: var(--shadow);
             transition: all 0.2s;
             border: 1px solid transparent;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
         }
         .news-card:hover {
             box-shadow: var(--shadow-hover);
             border-color: var(--border);
-            transform: translateY(-1px);
+            transform: translateY(-2px);
         }
         .news-card.hidden { display: none; }
         .card-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 8px;
+            margin-bottom: 10px;
         }
         .source-info { display: flex; align-items: center; gap: 6px; }
         .source-icon { width: 16px; height: 16px; border-radius: 4px; }
         .source-name { font-size: 12px; font-weight: 600; color: var(--text-secondary); }
+        
+        .card-badges {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
         .card-category {
             font-size: 11px;
             padding: 2px 8px;
-            border-radius: 10px;
+            border-radius: 6px;
             background: var(--badge-bg);
             color: var(--text-secondary);
         }
-        .card-title { font-size: 15px; font-weight: 600; line-height: 1.4; margin-bottom: 6px; }
+        .hot-tag {
+            font-size: 11px;
+            font-weight: 600;
+            padding: 2px 6px;
+            border-radius: 6px;
+            background: #fff0f0;
+            color: #ff3b30;
+        }
+        [data-theme="dark"] .hot-tag {
+            background: #3a1515;
+            color: #ff453a;
+        }
+
+        .card-title { font-size: 15px; font-weight: 600; line-height: 1.4; margin-bottom: 8px; }
         .card-title a { color: var(--text); text-decoration: none; }
         .card-title a:hover { color: var(--accent); }
+        
         .card-summary {
             font-size: 13px;
             color: var(--text-secondary);
             line-height: 1.5;
-            margin-bottom: 8px;
+            margin-bottom: 12px;
             display: -webkit-box;
-            -webkit-line-clamp: 2;
+            -webkit-line-clamp: 3;
             -webkit-box-orient: vertical;
             overflow: hidden;
+            flex-grow: 1;
         }
         .card-footer {
             display: flex;
@@ -189,18 +248,42 @@
             align-items: center;
             font-size: 12px;
             color: var(--text-secondary);
+            border-top: 1px solid var(--border);
+            padding-top: 10px;
+            margin-top: auto;
         }
         .card-time { opacity: 0.8; }
         .card-time:hover .time-full { display: inline; }
         .card-time:hover .time-ago { display: none; }
         .time-full { display: none; }
-        .domain-link { color: var(--text-secondary); text-decoration: none; font-size: 12px; }
+        .domain-link { color: var(--text-secondary); text-decoration: none; font-size: 11px; }
         .domain-link:hover { color: var(--accent); }
+        
+        /* Comments Section */
+        .comments-section {
+            max-width: 800px;
+            margin: 60px auto 20px auto;
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow);
+        }
+        .comments-title {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            border-left: 4px solid var(--accent);
+            padding-left: 10px;
+        }
+
         .footer {
             text-align: center;
             padding: 40px 20px;
             color: var(--text-secondary);
             font-size: 13px;
+            border-top: 1px solid var(--border);
+            margin-top: 60px;
         }
         .footer a { color: var(--accent); text-decoration: none; }
         .no-results {
@@ -253,10 +336,22 @@
                     </div>
                 </div>
             </div>
-            <div class="search-box">
-                <span class="search-icon">&#128269;</span>
-                <input type="text" id="searchInput" placeholder="搜索标题、来源...">
+            
+            <div class="search-row">
+                <div class="search-box">
+                    <span class="search-icon">&#128269;</span>
+                    <input type="text" id="searchInput" placeholder="搜索关键词、来源或分类...">
+                </div>
             </div>
+
+            <!-- 每日热门新闻词趋势分析 -->
+            <div class="trends-bar">
+                <span class="trends-label">📈 今日趋势热词:</span>
+                {% for word in trend_words %}
+                <span class="trend-tag" onclick="searchWord('{{ word }}')">{{ word }}</span>
+                {% endfor %}
+            </div>
+
             <div class="categories">
                 <button class="cat-btn active" data-category="all">全部<span class="cat-count">{{ total_entries }}</span></button>
                 {% for cat in categories %}
@@ -272,19 +367,31 @@
         <div class="news-grid" id="newsGrid">
             {% for entry in entries %}
             <article class="news-card" data-category="{{ entry.category }}" data-title="{{ entry.title | e }}" data-source="{{ entry.source_name | e }}">
-                <div class="card-header">
-                    <div class="source-info">
-                        <img class="source-icon" src="{{ entry.source_icon }}" alt="" loading="lazy" onerror="this.style.display='none'">
-                        <span class="source-name">{{ entry.source_name }}</span>
+                <div>
+                    <div class="card-header">
+                        <div class="source-info">
+                            <img class="source-icon" src="{{ entry.source_icon }}" alt="" loading="lazy" onerror="this.style.display='none'">
+                            <span class="source-name">{{ entry.source_name }}</span>
+                        </div>
+                        <div class="card-badges">
+                            {% if entry.hot_tag %}
+                            <span class="hot-tag">{{ entry.hot_tag }}</span>
+                            {% endif %}
+                            <span class="card-category">{{ entry.category }}</span>
+                        </div>
                     </div>
-                    <span class="card-category">{{ entry.category }}</span>
+                    <h2 class="card-title">
+                        <!-- SEO Friendly local static pages linking -->
+                        {% if loop.index0 < 50 %}
+                        <a href="articles/{{ entry.id }}.html" title="查看详情及摘要">{{ entry.title }}</a>
+                        {% else %}
+                        <a href="{{ entry.link }}" target="_blank" rel="noopener noreferrer">{{ entry.title }}</a>
+                        {% endif %}
+                    </h2>
+                    {% if entry.summary %}
+                    <p class="card-summary">{{ entry.summary }}</p>
+                    {% endif %}
                 </div>
-                <h2 class="card-title">
-                    <a href="{{ entry.link }}" target="_blank" rel="noopener noreferrer">{{ entry.title }}</a>
-                </h2>
-                {% if entry.summary %}
-                <p class="card-summary">{{ entry.summary }}</p>
-                {% endif %}
                 <div class="card-footer">
                     <span class="card-time">
                         <span class="time-ago">{{ entry.time_ago }}</span>
@@ -295,6 +402,26 @@
             </article>
             {% endfor %}
             <div class="no-results" id="noResults">没有找到匹配的文章</div>
+        </div>
+
+        <!-- 社区互动与反馈区 (Giscus 免费无服务器评论系统) -->
+        <div class="comments-section">
+            <h3 class="comments-title">💬 社区讨论与反馈</h3>
+            <script src="https://giscus.app/client.js"
+                    data-repo="mask2l/dailynewsflow"
+                    data-repo-id="R_kgDONG6Mog"
+                    data-category="Announcements"
+                    data-category-id="DIC_kwDONG6Mos4CkXm1"
+                    data-mapping="pathname"
+                    data-strict="0"
+                    data-reactions-enabled="1"
+                    data-emit-metadata="0"
+                    data-input-position="bottom"
+                    data-theme="light"
+                    data-lang="zh-CN"
+                    crossorigin="anonymous"
+                    async>
+            </script>
         </div>
     </div>
 
@@ -311,12 +438,23 @@
         var saved = localStorage.getItem('theme');
         if (saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
             document.documentElement.setAttribute('data-theme', 'dark');
+            updateGiscusTheme('dark');
         }
         themeBtn.addEventListener('click', function() {
             var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-            document.documentElement.setAttribute('data-theme', isDark ? 'light' : 'dark');
-            localStorage.setItem('theme', isDark ? 'light' : 'dark');
+            var newTheme = isDark ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            updateGiscusTheme(newTheme);
         });
+
+        function updateGiscusTheme(theme) {
+            const iframe = document.querySelector('iframe.giscus-frame');
+            if (!iframe) return;
+            iframe.contentWindow.postMessage({
+                giscus: { setConfig: { theme: theme } }
+            }, 'https://giscus.app');
+        }
 
         var layoutBtn = document.getElementById('layoutToggle');
         var grid = document.getElementById('newsGrid');
@@ -348,6 +486,13 @@
             filterCards();
         });
 
+        window.searchWord = function(word) {
+            searchInput.value = word;
+            searchQuery = word.toLowerCase();
+            filterCards();
+            searchInput.scrollIntoView({ behavior: 'smooth' });
+        };
+
         function filterCards() {
             var visibleCount = 0;
             cards.forEach(function(card) {
@@ -355,7 +500,7 @@
                 var title = (card.getAttribute('data-title') || '').toLowerCase();
                 var source = (card.getAttribute('data-source') || '').toLowerCase();
                 var catMatch = activeCategory === 'all' || cat === activeCategory;
-                var searchMatch = !searchQuery || title.indexOf(searchQuery) !== -1 || source.indexOf(searchQuery) !== -1;
+                var searchMatch = !searchQuery || title.indexOf(searchQuery) !== -1 || source.indexOf(searchQuery) !== -1 || cat.toLowerCase().indexOf(searchQuery) !== -1;
                 if (catMatch && searchMatch) {
                     card.classList.remove('hidden');
                     visibleCount++;
@@ -375,7 +520,7 @@
         });
     })();
     </script>
-
+    
     <!-- GoatCounter Analytics -->
     <script data-goatcounter="https://diaopapa123.goatcounter.com/count"
             async src="//gc.zgo.at/count.js"></script>
