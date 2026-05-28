@@ -90,9 +90,6 @@ categories:
 
   - name: "特色专栏"
     sources:
-      - name: "Paul Graham"
-        url: "http://www.paulgraham.com/"
-        rss: "http://www.aaronsw.com/2002/feeds/pgessays.rss"
       - name: "Marc Andreessen"
         url: "https://pmarca.com/"
         rss: "https://pmarca.com/feed/"
