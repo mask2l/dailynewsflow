@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NewsFlow - 新闻聚合</title>
+    <meta name="description" content="多源新闻聚合，覆盖科技、财经、AI、创投、开发者社区等领域">
+    <style>
+        :root {
+            --bg: #f5f5f7;
+            --card-bg: #ffffff;
+            --text: #1d1d1f;
+            --text-secondary: #6e6e73;
+            --accent: #0066cc;
+            --accent-hover: #004499;
+            --border: #d2d2d7;
+            --badge-bg: #e8e8ed;
+            --shadow: 0 1px 3px rgba(0,0,0,0.08);
+            --shadow-hover: 0 4px 12px rgba(0,0,0,0.12);
+            --radius: 10px;
+        }
+        [data-theme="dark"] {
+            --bg: #0a0a0f;
+            --card-bg: #1c1c1e;
+            --text: #f5f5f7;
+            --text-secondary: #98989d;
+            --accent: #4d9fff;
+            --accent-hover: #6db3ff;
+            --border: #38383a;
+            --badge-bg: #2c2c2e;
+            --shadow: 0 1px 3px rgba(0,0,0,0.3);
+            --shadow-hover: 0 4px 12px rgba(0,0,0,0.4);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Arial, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.5;
+            transition: background 0.3s, color 0.3s;
+        }
+        .header {
+            background: var(--card-bg);
+            border-bottom: 1px solid var(--border);
+            padding: 20px 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+        .header-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        .logo {
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+        .logo span { color: var(--accent); }
+        .header-meta {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+        .stats { display: flex; gap: 12px; }
+        .stat-item { white-space: nowrap; }
+        .stat-num { font-weight: 600; color: var(--accent); }
+        .controls { display: flex; gap: 8px; }
+        .btn-icon {
+            background: var(--badge-bg);
+            border: none;
+            border-radius: 8px;
+            padding: 6px 10px;
+            cursor: pointer;
+            color: var(--text);
+            font-size: 16px;
+            transition: all 0.2s;
+        }
+        .btn-icon:hover { background: var(--border); }
+        .search-box {
+            display: flex;
+            align-items: center;
+            background: var(--badge-bg);
+            border-radius: 8px;
+            padding: 0 12px;
+            margin-bottom: 12px;
+        }
+        .search-icon { color: var(--text-secondary); font-size: 14px; }
+        .search-box input {
+            background: none;
+            border: none;
+            outline: none;
+            padding: 8px;
+            width: 100%;
+            font-size: 14px;
+            color: var(--text);
+        }
+        .search-box input::placeholder { color: var(--text-secondary); }
+        .categories {
+            display: flex;
+            gap: 6px;
+            overflow-x: auto;
+            scrollbar-width: none;
+            -webkit-overflow-scrolling: touch;
+            padding-bottom: 4px;
+        }
+        .categories::-webkit-scrollbar { display: none; }
+        .cat-btn {
+            background: var(--badge-bg);
+            border: none;
+            border-radius: 20px;
+            padding: 6px 14px;
+            font-size: 13px;
+            cursor: pointer;
+            white-space: nowrap;
+            color: var(--text-secondary);
+            transition: all 0.2s;
+        }
+        .cat-btn:hover { color: var(--text); background: var(--border); }
+        .cat-btn.active { background: var(--accent); color: #fff; }
+        .cat-count { font-size: 11px; margin-left: 4px; opacity: 0.7; }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .news-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 16px;
+        }
+        .news-card {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            padding: 16px;
+            box-shadow: var(--shadow);
+            transition: all 0.2s;
+            border: 1px solid transparent;
+        }
+        .news-card:hover {
+            box-shadow: var(--shadow-hover);
+            border-color: var(--border);
+            transform: translateY(-1px);
+        }
+        .news-card.hidden { display: none; }
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        .source-info { display: flex; align-items: center; gap: 6px; }
+        .source-icon { width: 16px; height: 16px; border-radius: 4px; }
+        .source-name { font-size: 12px; font-weight: 600; color: var(--text-secondary); }
+        .card-category {
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 10px;
+            background: var(--badge-bg);
+            color: var(--text-secondary);
+        }
+        .card-title { font-size: 15px; font-weight: 600; line-height: 1.4; margin-bottom: 6px; }
+        .card-title a { color: var(--text); text-decoration: none; }
+        .card-title a:hover { color: var(--accent); }
+        .card-summary {
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.5;
+            margin-bottom: 8px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .card-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+        .card-time { opacity: 0.8; }
+        .card-time:hover .time-full { display: inline; }
+        .card-time:hover .time-ago { display: none; }
+        .time-full { display: none; }
+        .domain-link { color: var(--text-secondary); text-decoration: none; font-size: 12px; }
+        .domain-link:hover { color: var(--accent); }
+        .footer {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-secondary);
+            font-size: 13px;
+        }
+        .footer a { color: var(--accent); text-decoration: none; }
+        .no-results {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-secondary);
+            display: none;
+            grid-column: 1 / -1;
+        }
+        .back-to-top {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            border-radius: 50%;
+            width: 44px;
+            height: 44px;
+            font-size: 20px;
+            cursor: pointer;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            opacity: 0;
+            transition: all 0.3s;
+            z-index: 50;
+        }
+        .back-to-top.visible { opacity: 1; }
+        .back-to-top:hover { transform: scale(1.1); }
+        @media (max-width: 768px) {
+            .news-grid { grid-template-columns: 1fr; gap: 12px; }
+            .header-top { flex-wrap: wrap; gap: 10px; }
+            .header-meta { flex-wrap: wrap; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-inner">
+            <div class="header-top">
+                <div class="logo">News<span>Flow</span></div>
+                <div class="header-meta">
+                    <div class="stats">
+                        <span class="stat-item"><span class="stat-num">{{ total_entries }}</span> 篇文章</span>
+                        <span class="stat-item"><span class="stat-num">{{ successful_sources }}</span>/{{ total_sources }} 源</span>
+                        <span class="stat-item">更新于 {{ updated_at }}</span>
+                    </div>
+                    <div class="controls">
+                        <button class="btn-icon" id="themeToggle" title="切换主题">&#9789;</button>
+                        <button class="btn-icon" id="layoutToggle" title="切换布局">&#9776;</button>
+                    </div>
+                </div>
+            </div>
+            <div class="search-box">
+                <span class="search-icon">&#128269;</span>
+                <input type="text" id="searchInput" placeholder="搜索标题、来源...">
+            </div>
+            <div class="categories">
+                <button class="cat-btn active" data-category="all">全部<span class="cat-count">{{ total_entries }}</span></button>
+                {% for cat in categories %}
+                {% if cat in category_counts %}
+                <button class="cat-btn" data-category="{{ cat }}">{{ cat }}<span class="cat-count">{{ category_counts[cat] }}</span></button>
+                {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="news-grid" id="newsGrid">
+            {% for entry in entries %}
+            <article class="news-card" data-category="{{ entry.category }}" data-title="{{ entry.title | e }}" data-source="{{ entry.source_name | e }}">
+                <div class="card-header">
+                    <div class="source-info">
+                        <img class="source-icon" src="{{ entry.source_icon }}" alt="" loading="lazy" onerror="this.style.display='none'">
+                        <span class="source-name">{{ entry.source_name }}</span>
+                    </div>
+                    <span class="card-category">{{ entry.category }}</span>
+                </div>
+                <h2 class="card-title">
+                    <a href="{{ entry.link }}" target="_blank" rel="noopener noreferrer">{{ entry.title }}</a>
+                </h2>
+                {% if entry.summary %}
+                <p class="card-summary">{{ entry.summary }}</p>
+                {% endif %}
+                <div class="card-footer">
+                    <span class="card-time">
+                        <span class="time-ago">{{ entry.time_ago }}</span>
+                        <span class="time-full">{{ entry.date_str }}</span>
+                    </span>
+                    <a class="domain-link" href="{{ entry.source_url }}" target="_blank" rel="noopener noreferrer">{{ entry.source_url | replace('https://', '') | replace('http://', '') | truncate(30) }}</a>
+                </div>
+            </article>
+            {% endfor %}
+            <div class="no-results" id="noResults">没有找到匹配的文章</div>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p>NewsFlow - 新闻聚合器 | 数据来源于各公开 RSS 订阅</p>
+        <p>Powered by Python + Jinja2 + GitHub Actions + GitHub Pages</p>
+    </div>
+
+    <button class="back-to-top" id="backToTop">&uarr;</button>
+
+    <script>
+    (function() {
+        var themeBtn = document.getElementById('themeToggle');
+        var saved = localStorage.getItem('theme');
+        if (saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.setAttribute('data-theme', 'dark');
+        }
+        themeBtn.addEventListener('click', function() {
+            var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            document.documentElement.setAttribute('data-theme', isDark ? 'light' : 'dark');
+            localStorage.setItem('theme', isDark ? 'light' : 'dark');
+        });
+
+        var layoutBtn = document.getElementById('layoutToggle');
+        var grid = document.getElementById('newsGrid');
+        var isList = false;
+        layoutBtn.addEventListener('click', function() {
+            isList = !isList;
+            grid.style.gridTemplateColumns = isList ? '1fr' : '';
+            layoutBtn.innerHTML = isList ? '&#8862;' : '&#9776;';
+        });
+
+        var catBtns = document.querySelectorAll('.cat-btn');
+        var cards = document.querySelectorAll('.news-card');
+        var noResults = document.getElementById('noResults');
+        var activeCategory = 'all';
+
+        catBtns.forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                catBtns.forEach(function(b) { b.classList.remove('active'); });
+                btn.classList.add('active');
+                activeCategory = btn.getAttribute('data-category');
+                filterCards();
+            });
+        });
+
+        var searchInput = document.getElementById('searchInput');
+        var searchQuery = '';
+        searchInput.addEventListener('input', function() {
+            searchQuery = this.value.toLowerCase();
+            filterCards();
+        });
+
+        function filterCards() {
+            var visibleCount = 0;
+            cards.forEach(function(card) {
+                var cat = card.getAttribute('data-category');
+                var title = (card.getAttribute('data-title') || '').toLowerCase();
+                var source = (card.getAttribute('data-source') || '').toLowerCase();
+                var catMatch = activeCategory === 'all' || cat === activeCategory;
+                var searchMatch = !searchQuery || title.indexOf(searchQuery) !== -1 || source.indexOf(searchQuery) !== -1;
+                if (catMatch && searchMatch) {
+                    card.classList.remove('hidden');
+                    visibleCount++;
+                } else {
+                    card.classList.add('hidden');
+                }
+            });
+            noResults.style.display = visibleCount === 0 ? 'block' : 'none';
+        }
+
+        var backBtn = document.getElementById('backToTop');
+        window.addEventListener('scroll', function() {
+            backBtn.classList.toggle('visible', window.scrollY > 500);
+        });
+        backBtn.addEventListener('click', function() {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+    })();
+    </script>
+</body>
+</html>

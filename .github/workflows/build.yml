@@ -1,0 +1,40 @@
+name: Build & Deploy NewsFlow
+
+on:
+  schedule:
+    # 早中晚三次: 08:00 CST(00:00 UTC), 12:00 CST(04:00 UTC), 20:00 CST(12:00 UTC)
+    - cron: '0 0,4,12 * * *'
+  workflow_dispatch: # 支持手动触发
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Fetch feeds & generate site
+        run: python scripts/fetch_news.py
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./output
+          force_orphan: true
