@@ -9,10 +9,13 @@ import os
 import re
 import hashlib
 import ssl
+import random
+import time
 from datetime import datetime, timezone, timedelta
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from jinja2 import Environment, FileSystemLoader
 from email.utils import parsedate_to_datetime
+import requests
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
@@ -24,8 +27,13 @@ OUTPUT_DIR = os.path.join(PROJECT_DIR, "output")
 
 MAX_ENTRIES_PER_SOURCE = 10
 MAX_TOTAL_ENTRIES = 500
+MAX_TRANSLATE_ENTRIES = 10  # Only translate top 10 entries (10*50*3*30=45k chars/month, within 50k limit)
 MAX_WORKERS = 30
 USER_AGENT = "Mozilla/5.0 (compatible; NewsFlow/1.0; +https://github.com)"
+
+BAIDU_APPID = os.getenv("BAIDU_APPID", "20260528002621795")
+BAIDU_SECRET_KEY = os.getenv("BAIDU_SECRET_KEY", "ldoyoxdwT1NqE77_spQ1")
+BAIDU_API_URL = "https://fanyi-api.baidu.com/api/trans/vip/translate"
 
 
 def load_config():
@@ -71,6 +79,43 @@ def get_favicon(url):
         return ""
 
 
+def translate_baidu(text, from_lang="en", to_lang="zh"):
+    """Translate text using Baidu Translate API."""
+    if not text or len(text) < 2:
+        return text
+    try:
+        salt = str(random.randint(32768, 65536))
+        sign_str = BAIDU_APPID + text + salt + BAIDU_SECRET_KEY
+        sign = hashlib.md5(sign_str.encode()).hexdigest()
+        params = {
+            "q": text,
+            "from": from_lang,
+            "to": to_lang,
+            "appid": BAIDU_APPID,
+            "salt": salt,
+            "sign": sign,
+        }
+        resp = requests.get(BAIDU_API_URL, params=params, timeout=10)
+        result = resp.json()
+        if "trans_result" in result:
+            return result["trans_result"][0]["dst"]
+        else:
+            print(f"  [WARN] Translation failed: {result.get('error_msg', 'unknown')}")
+            return text
+    except Exception as e:
+        print(f"  [WARN] Translation error: {e}")
+        return text
+
+
+def is_english(text):
+    """Check if text is primarily English."""
+    if not text:
+        return False
+    english_chars = sum(1 for c in text if c.isalpha() and ord(c) < 128)
+    total_chars = sum(1 for c in text if c.isalpha())
+    return total_chars > 0 and english_chars / total_chars > 0.6
+
+
 def fetch_feed(source, category_name):
     entries = []
     rss_url = source.get("rss", "")
@@ -95,6 +140,7 @@ def fetch_feed(source, category_name):
             summary = strip_html(entry.get("summary", ""))
             if len(summary) > 200:
                 summary = summary[:200] + "..."
+
             entries.append({
                 "title": title,
                 "link": link,
@@ -172,6 +218,16 @@ def main():
     # Sort newest first, then limit
     all_entries.sort(key=lambda x: x["published_ts"], reverse=True)
     all_entries = all_entries[:MAX_TOTAL_ENTRIES]
+
+    # Translate top entries (save quota)
+    print(f"\nTranslating top {MAX_TRANSLATE_ENTRIES} English titles...")
+    for i, entry in enumerate(all_entries[:MAX_TRANSLATE_ENTRIES]):
+        if is_english(entry["title"]):
+            translated = translate_baidu(entry["title"])
+            entry["title"] = translated
+            entry["original_title"] = entry.get("original_title", entry["title"])
+            time.sleep(1)  # Rate limit: Baidu free tier QPS=1
+            print(f"  [{i+1}/{MAX_TRANSLATE_ENTRIES}] {entry['original_title'][:50]}... → {translated[:50]}...")
 
     for entry in all_entries:
         entry["time_ago"] = format_time_ago(entry["published"])
