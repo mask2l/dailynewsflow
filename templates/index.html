@@ -525,33 +525,64 @@
     <!-- translate.js 网页翻译 -->
     <script src="https://cdn.staticfile.net/translate.js/3.12.0/translate.js"></script>
     <script>
-        // translate.js 标准配置
-        translate.language.setLocal('en'); // 网页源语包含英文，将 en 设为源语言
-        translate.service.use('client.edge'); // 使用微软 Edge 免费翻译
-        translate.ignore.class.push('ignore'); // 忽略具有 ignore 类的节点不翻译
-        translate.execute(); // 执行
+        // 初始化配置
+        try {
+            translate.language.setLocal('en'); // 将英文设为网页源语
+            translate.service.use('client.edge'); // 默认使用微软 Edge 翻译服务
+            translate.ignore.class.push('ignore'); // 忽略 ignore 类元素
+            translate.execute(); // 执行初始化
+        } catch (e) {
+            console.warn('translate.js 默认初始化失败，尝试备用通道:', e);
+            try {
+                translate.service.use('google'); // fallback to google
+                translate.execute();
+            } catch (err) {
+                console.error('translate.js 彻底加载失败:', err);
+            }
+        }
         
         // 绑定一键翻译切换事件
         var isTranslated = false;
-        document.getElementById('translateToggle').addEventListener('click', function() {
-            if (typeof translate === 'undefined') {
-                console.error('translate.js 未加载完成');
-                return;
-            }
-            if (isTranslated) {
-                translate.changeLanguage('en'); // 还原成英文原文
-                isTranslated = false;
-                this.innerHTML = "� 翻译";
-                this.style.background = "";
-                this.style.color = "";
-            } else {
-                translate.changeLanguage('zh-CN'); // 一键翻译成中文简体
-                isTranslated = true;
-                this.innerHTML = "� 原文";
-                this.style.background = "var(--accent)";
-                this.style.color = "#ffffff";
-            }
-        });
+        var btn = document.getElementById('translateToggle');
+        
+        if (btn) {
+            btn.addEventListener('click', function() {
+                if (typeof translate === 'undefined') {
+                    alert('翻译插件正在加载中，请稍候再试...');
+                    return;
+                }
+                
+                try {
+                    if (isTranslated) {
+                        translate.changeLanguage('en'); // 还原成英文原文
+                        isTranslated = false;
+                        this.innerHTML = "🌐 翻译";
+                        this.style.background = "";
+                        this.style.color = "";
+                    } else {
+                        // 翻译时确保使用有效通道，如果默认失败则捕获并自动尝试备用
+                        try {
+                            translate.changeLanguage('zh-CN'); // 翻译成中文简体
+                        } catch (t_err) {
+                            console.warn('Edge 通道翻译失败，自动切换 Google 通道:', t_err);
+                            translate.service.use('google');
+                            translate.changeLanguage('zh-CN');
+                        }
+                        
+                        isTranslated = true;
+                        this.innerHTML = "🀄 原文";
+                        this.style.background = "var(--accent)";
+                        this.style.color = "#ffffff";
+                    }
+                } catch (error) {
+                    console.error('一键翻译执行出错:', error);
+                    this.innerHTML = "⚠️ 翻译失败";
+                    setTimeout(function() {
+                        btn.innerHTML = "🌐 翻译";
+                    }, 2000);
+                }
+            });
+        }
     </script>
     
     <!-- GoatCounter Analytics -->

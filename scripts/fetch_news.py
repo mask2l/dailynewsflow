@@ -29,7 +29,8 @@ ARTICLES_DIR = os.path.join(OUTPUT_DIR, "articles")
 
 MAX_ENTRIES_PER_SOURCE = 10
 MAX_TOTAL_ENTRIES = 500
-MAX_TRANSLATE_ENTRIES = 15  # Only translate top 10-15 entries to save quota
+ENABLE_BAIDU_TRANSLATE = False  # 暂停百度翻译：避免中英混合导致前端 translate.js 混乱，完全由 translate.js 100% 绿色接管
+MAX_TRANSLATE_ENTRIES = 15 if ENABLE_BAIDU_TRANSLATE else 0  # Only translate top 10-15 entries to save quota
 MAX_SEO_PAGES = 50          # Generate separate SEO HTML pages for top 50 articles
 MAX_WORKERS = 30
 USER_AGENT = "Mozilla/5.0 (compatible; NewsFlow/1.0; +https://github.com)"
