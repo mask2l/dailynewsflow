@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NewsFlow - 每日新闻智能聚焦</title>
+    <title>每日科技资讯 | 全球科技互联网实时新闻聚合 | 行业资讯精选</title>
     <meta name="description" content="多源新闻聚合与趋势分析，覆盖科技、财经、AI前沿、创投、开发者社区等领域">
     <style>
         :root {
@@ -320,7 +320,7 @@
     </style>
 </head>
 <body>
-    <div class="header">
+    <div class="header ignore">
         <div class="header-inner">
             <div class="header-top">
                 <div class="logo">News<span>Flow</span></div>
@@ -331,6 +331,7 @@
                         <span class="stat-item">更新于 {{ updated_at }}</span>
                     </div>
                     <div class="controls">
+                        <button class="btn-icon" id="translateToggle" title="翻译英文网页">🌐 翻译</button>
                         <button class="btn-icon" id="themeToggle" title="切换主题">&#9789;</button>
                         <button class="btn-icon" id="layoutToggle" title="切换布局">&#9776;</button>
                     </div>
@@ -368,7 +369,7 @@
             {% for entry in entries %}
             <article class="news-card" data-category="{{ entry.category }}" data-title="{{ entry.title | e }}" data-source="{{ entry.source_name | e }}">
                 <div>
-                    <div class="card-header">
+                    <div class="card-header ignore">
                         <div class="source-info">
                             <img class="source-icon" src="{{ entry.source_icon }}" alt="" loading="lazy" onerror="this.style.display='none'">
                             <span class="source-name">{{ entry.source_name }}</span>
@@ -392,7 +393,7 @@
                     <p class="card-summary">{{ entry.summary }}</p>
                     {% endif %}
                 </div>
-                <div class="card-footer">
+                <div class="card-footer ignore">
                     <span class="card-time">
                         <span class="time-ago">{{ entry.time_ago }}</span>
                         <span class="time-full">{{ entry.date_str }}</span>
@@ -405,7 +406,7 @@
         </div>
 
         <!-- 社区互动与反馈区 (Giscus 免费无服务器评论系统) -->
-        <div class="comments-section">
+        <div class="comments-section ignore">
             <h3 class="comments-title">💬 社区讨论与反馈</h3>
             <script src="https://giscus.app/client.js"
                     data-repo="mask2l/dailynewsflow"
@@ -425,7 +426,7 @@
         </div>
     </div>
 
-    <div class="footer">
+    <div class="footer ignore">
         <p>NewsFlow - 新闻聚合器 | 数据来源于各公开 RSS 订阅</p>
         <p>Powered by Python + Jinja2 + GitHub Actions + GitHub Pages</p>
     </div>
@@ -519,6 +520,32 @@
             window.scrollTo({ top: 0, behavior: 'smooth' });
         });
     })();
+    </script>
+    
+    <!-- translate.js 网页翻译 -->
+    <script src="https://cdn.staticfile.net/translate.js/3.12.0/translate.js"></script>
+    <script>
+        // translate.js 初始化配置
+        translate.language.setLocal('chinese'); // 设置本地语言
+        translate.service.use('client.edge');   // 使用微软 Edge 免费翻译通道
+        translate.ignore.class.push('ignore');  // 忽略具有 ignore 类的节点不翻译
+        translate.execute();                    // 执行初始化
+        
+        // 绑定一键翻译切换事件
+        var isTranslated = false;
+        document.getElementById('translateToggle').addEventListener('click', function() {
+            translate.toggle();
+            isTranslated = !isTranslated;
+            if (isTranslated) {
+                this.innerHTML = "🀄 原文";
+                this.style.background = "var(--accent)";
+                this.style.color = "#ffffff";
+            } else {
+                this.innerHTML = "🌐 翻译";
+                this.style.background = "";
+                this.style.color = "";
+            }
+        });
     </script>
     
     <!-- GoatCounter Analytics -->
