@@ -317,10 +317,48 @@
             .header-top { flex-wrap: wrap; gap: 10px; }
             .header-meta { flex-wrap: wrap; }
         }
-    </style>
+    
+        /* Google Translate Widget Elegant Custom Styles */
+        #google_translate_element {
+            display: inline-block;
+            vertical-align: middle;
+            margin-right: 4px;
+        }
+        .goog-te-gadget {
+            font-family: inherit !important;
+            font-size: 0 !important; /* Hide Google branding text */
+        }
+        .goog-te-gadget .goog-te-combo {
+            background: var(--badge-bg) !important;
+            color: var(--text) !important;
+            border: 1px solid var(--border) !important;
+            border-radius: 8px !important;
+            padding: 5px 8px !important;
+            font-size: 13px !important;
+            font-weight: 600 !important;
+            outline: none !important;
+            cursor: pointer !important;
+            transition: all 0.2s !important;
+        }
+        .goog-te-gadget .goog-te-combo:hover {
+            background: var(--border) !important;
+        }
+        .goog-te-banner-frame {
+            display: none !important;
+        }
+        body {
+            top: 0px !important;
+        }
+        .goog-te-gadget span {
+            display: none !important;
+        }
+        iframe.skiptranslate {
+            display: none !important;
+        }
+</style>
 </head>
 <body>
-    <div class="header ignore">
+    <div class="header notranslate">
         <div class="header-inner">
             <div class="header-top">
                 <div class="logo">News<span>Flow</span></div>
@@ -331,7 +369,7 @@
                         <span class="stat-item">更新于 {{ updated_at }}</span>
                     </div>
                     <div class="controls">
-                        <button class="btn-icon" id="translateToggle" title="翻译英文网页">🌐 翻译</button>
+                        <div id="google_translate_element"></div>
                         <button class="btn-icon" id="themeToggle" title="切换主题">&#9789;</button>
                         <button class="btn-icon" id="layoutToggle" title="切换布局">&#9776;</button>
                     </div>
@@ -369,7 +407,7 @@
             {% for entry in entries %}
             <article class="news-card" data-category="{{ entry.category }}" data-title="{{ entry.title | e }}" data-source="{{ entry.source_name | e }}">
                 <div>
-                    <div class="card-header ignore">
+                    <div class="card-header notranslate">
                         <div class="source-info">
                             <img class="source-icon" src="{{ entry.source_icon }}" alt="" loading="lazy" onerror="this.style.display='none'">
                             <span class="source-name">{{ entry.source_name }}</span>
@@ -393,7 +431,7 @@
                     <p class="card-summary">{{ entry.summary }}</p>
                     {% endif %}
                 </div>
-                <div class="card-footer ignore">
+                <div class="card-footer notranslate">
                     <span class="card-time">
                         <span class="time-ago">{{ entry.time_ago }}</span>
                         <span class="time-full">{{ entry.date_str }}</span>
@@ -406,7 +444,7 @@
         </div>
 
         <!-- 社区互动与反馈区 (Giscus 免费无服务器评论系统) -->
-        <div class="comments-section ignore">
+        <div class="comments-section notranslate">
             <h3 class="comments-title">💬 社区讨论与反馈</h3>
             <script src="https://giscus.app/client.js"
                     data-repo="mask2l/dailynewsflow"
@@ -426,7 +464,7 @@
         </div>
     </div>
 
-    <div class="footer ignore">
+    <div class="footer notranslate">
         <p>NewsFlow - 新闻聚合器 | 数据来源于各公开 RSS 订阅</p>
         <p>Powered by Python + Jinja2 + GitHub Actions + GitHub Pages</p>
     </div>
@@ -522,68 +560,18 @@
     })();
     </script>
     
-    <!-- translate.js 网页翻译 -->
-    <script src="https://cdn.staticfile.net/translate.js/3.12.0/translate.js"></script>
-    <script>
-        // 初始化配置
-        try {
-            translate.language.setLocal('en'); // 将英文设为网页源语
-            translate.service.use('client.edge'); // 默认使用微软 Edge 翻译服务
-            translate.ignore.class.push('ignore'); // 忽略 ignore 类元素
-            translate.execute(); // 执行初始化
-        } catch (e) {
-            console.warn('translate.js 默认初始化失败，尝试备用通道:', e);
-            try {
-                translate.service.use('google'); // fallback to google
-                translate.execute();
-            } catch (err) {
-                console.error('translate.js 彻底加载失败:', err);
-            }
-        }
-        
-        // 绑定一键翻译切换事件
-        var isTranslated = false;
-        var btn = document.getElementById('translateToggle');
-        
-        if (btn) {
-            btn.addEventListener('click', function() {
-                if (typeof translate === 'undefined') {
-                    alert('翻译插件正在加载中，请稍候再试...');
-                    return;
-                }
-                
-                try {
-                    if (isTranslated) {
-                        translate.changeLanguage('en'); // 还原成英文原文
-                        isTranslated = false;
-                        this.innerHTML = "🌐 翻译";
-                        this.style.background = "";
-                        this.style.color = "";
-                    } else {
-                        // 翻译时确保使用有效通道，如果默认失败则捕获并自动尝试备用
-                        try {
-                            translate.changeLanguage('zh-CN'); // 翻译成中文简体
-                        } catch (t_err) {
-                            console.warn('Edge 通道翻译失败，自动切换 Google 通道:', t_err);
-                            translate.service.use('google');
-                            translate.changeLanguage('zh-CN');
-                        }
-                        
-                        isTranslated = true;
-                        this.innerHTML = "🀄 原文";
-                        this.style.background = "var(--accent)";
-                        this.style.color = "#ffffff";
-                    }
-                } catch (error) {
-                    console.error('一键翻译执行出错:', error);
-                    this.innerHTML = "⚠️ 翻译失败";
-                    setTimeout(function() {
-                        btn.innerHTML = "🌐 翻译";
-                    }, 2000);
-                }
-            });
+    <!-- Google Translate Widget 网页翻译 -->
+    <script type="text/javascript">
+        function googleTranslateElementInit() {
+            new google.translate.TranslateElement({
+                pageLanguage: 'en',
+                includedLanguages: 'zh-CN,en',
+                layout: google.translate.TranslateElement.InlineLayout.SIMPLE,
+                autoDisplay: false
+            }, 'google_translate_element');
         }
     </script>
+    <script type="text/javascript" src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
     
     <!-- GoatCounter Analytics -->
     <script data-goatcounter="https://diaopapa123.goatcounter.com/count"
