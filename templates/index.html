@@ -525,25 +525,31 @@
     <!-- translate.js 网页翻译 -->
     <script src="https://cdn.staticfile.net/translate.js/3.12.0/translate.js"></script>
     <script>
-        // translate.js 初始化配置
-        translate.language.setLocal('chinese'); // 设置本地语言
-        translate.service.use('client.edge');   // 使用微软 Edge 免费翻译通道
-        translate.ignore.class.push('ignore');  // 忽略具有 ignore 类的节点不翻译
-        translate.execute();                    // 执行初始化
+        // translate.js 标准配置
+        translate.language.setLocal('en'); // 网页源语包含英文，将 en 设为源语言
+        translate.service.use('client.edge'); // 使用微软 Edge 免费翻译
+        translate.ignore.class.push('ignore'); // 忽略具有 ignore 类的节点不翻译
+        translate.execute(); // 执行
         
         // 绑定一键翻译切换事件
         var isTranslated = false;
         document.getElementById('translateToggle').addEventListener('click', function() {
-            translate.toggle();
-            isTranslated = !isTranslated;
+            if (typeof translate === 'undefined') {
+                console.error('translate.js 未加载完成');
+                return;
+            }
             if (isTranslated) {
-                this.innerHTML = "🀄 原文";
-                this.style.background = "var(--accent)";
-                this.style.color = "#ffffff";
-            } else {
-                this.innerHTML = "🌐 翻译";
+                translate.changeLanguage('en'); // 还原成英文原文
+                isTranslated = false;
+                this.innerHTML = "� 翻译";
                 this.style.background = "";
                 this.style.color = "";
+            } else {
+                translate.changeLanguage('zh-CN'); // 一键翻译成中文简体
+                isTranslated = true;
+                this.innerHTML = "� 原文";
+                this.style.background = "var(--accent)";
+                this.style.color = "#ffffff";
             }
         });
     </script>
